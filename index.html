@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced text Editor</title>
+</head>
+<body>
+    <body>
+     <textarea id="editor" cols="10" rows="30">
+     </textarea>
+</body></body>
+    </form>
+    <script src="tinymce/tinymce.min.js"></script>
+    <script src="script.js"></script>
+    <script>
+             <script>
+            tinymce.init({
+                selector: "textarea",
+                plugins: "code powerpaste link image save image tinydrive preview imagetools pageembed textcolor visualblocks bbcode advlist",
+                toolbar: "undo redo | styles | contexmenu | save | imagetools | textcolor | code | styles | bold italic | image | tinydrive | link image | pageembed | AskChatGPT",
+                skin: (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oxide-dark' : 'oxide'),
+                content_css: (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default')
+                content_style: 'div.answer { font-family: Consolas,monaco,monospace;  background-color: #301401; color: white; overflow-y: auto padding: 10px; }',
+                
+                setup: (editor) => {\
+                    editor.ui.registry.addButton('AskChatGPT', {
+                        text: "Ask ChatGPT",
+                        icon: 'highlight-bg-color',
+                        tooltip: 'Highlight a prompt and click this button to query ChatGPT',
+                        enabled: true,
+                        onAction: (_) => {
+                            const selection = tinymce.activeEditor.selection.getContent();
+                            console.log(selection);
+                            const ChatGPT = {
+                                model: "text-davinci-003",
+                                prompt: selection,
+                                temperature: 0,
+                                max_tokens: 100
+                            };
+
+                            fetch("https://api.openai.com/v1/completions", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    'Authorization': `Bearer sk-YOUR-API-KEY`
+                                },
+                                body: JSON.stringify(ChatGPT)
+                            }).then(res => res.json()).then(data => {
+                                var reply = data.choices[0].text;
+                                console.log(reply);
+                                editor.selection.collapse();
+                                editor.execCommand('InsertHTML', true, '<div class="answer"></div>');
+                                editor.insertContent(reply);
+                            }).catch(error => {
+                                console.log("something went wrong");
+                            })
+                        }
+                    });
+                }
+            })
+                </script>
+</body>
+</html>
